@@ -1,0 +1,43 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in on two devices
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `docker compose exec app hopclip version`
+    validations:
+      required: true
+  - type: dropdown
+    id: frontdoor
+    attributes:
+      label: Front door
+      options: [Cloudflare Tunnel, Caddy, nginx, Other, None]
+  - type: input
+    id: browsers
+    attributes:
+      label: Browsers / devices
+      placeholder: e.g. Safari on iOS 18, Chrome 140 on Windows
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Output of `docker compose logs app`. Remove anything private.
+      render: text
