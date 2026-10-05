@@ -1,0 +1,61 @@
+name: hopclip
+
+x-app-env: &app-env
+  ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+  SESSION_TTL: ${SESSION_TTL:-720h}
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-}
+  MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
+  USER_QUOTA_MB: ${USER_QUOTA_MB:-2048}
+  MAX_CLIP_KB: ${MAX_CLIP_KB:-256}
+  CLIP_HISTORY_LIMIT: ${CLIP_HISTORY_LIMIT:-200}
+  FILE_RETENTION_DAYS: ${FILE_RETENTION_DAYS:-0}
+  CLIP_RETENTION_DAYS: ${CLIP_RETENTION_DAYS:-0}
+  LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-10}
+  LOGIN_WINDOW: ${LOGIN_WINDOW:-15m}
+
+services:
+  app:
+    image: ghcr.io/sainad2222/hopclip:latest
+    build: .
+    restart: unless-stopped
+    environment: *app-env
+    volumes:
+      - data:/data
+    # Loopback only: reach it through Caddy, Cloudflare Tunnel or a host proxy.
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: [caddy]
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: [tunnel]
+    restart: unless-stopped
+    depends_on: [app]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+
+volumes:
+  data:
+  caddy-data:
+  caddy-config:
