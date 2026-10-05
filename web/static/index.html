@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="referrer" content="no-referrer">
+  <title>Hopclip</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <div id="boot" class="boot"><span class="spinner" aria-hidden="true"></span></div>
+
+  <main id="login-view" class="login" hidden>
+    <form id="login-form" class="card login-card" novalidate>
+      <div class="brand brand-lg">
+        <img src="/icon.svg" alt="" width="40" height="40">
+        <span>Hopclip</span>
+      </div>
+      <label class="field">
+        <span>Username</span>
+        <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <label class="field">
+        <span>Device name <small>(optional)</small></span>
+        <input name="device_name" maxlength="64" autocomplete="off" placeholder="e.g. Work laptop">
+      </label>
+      <p id="login-error" class="form-error" role="alert"></p>
+      <button class="btn primary block" type="submit">Sign in</button>
+    </form>
+  </main>
+
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <img src="/icon.svg" alt="" width="28" height="28">
+          <span>Hopclip</span>
+        </div>
+        <span id="conn" class="conn" data-state="connecting" role="status">Connecting</span>
+        <button id="refresh-btn" class="icon-btn" type="button" title="Refresh" aria-label="Refresh">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="clips" type="button">Clipboard</button>
+        <button role="tab" data-tab="files" type="button">Files</button>
+        <button role="tab" data-tab="account" type="button">Devices &amp; account</button>
+      </nav>
+    </header>
+
+    <div class="container">
+      <section id="tab-clips" class="tab" role="tabpanel">
+        <form id="clip-form" class="card composer">
+          <textarea id="clip-input" rows="3" placeholder="Type or paste text to share with your other devices" aria-label="Text to share"></textarea>
+          <div class="composer-actions">
+            <button type="button" id="paste-btn" class="btn">Paste &amp; send</button>
+            <span class="hint hide-sm">Ctrl+Enter to send · paste anywhere on this page</span>
+            <button class="btn primary" type="submit">Send</button>
+          </div>
+        </form>
+
+        <div class="list-head">
+          <h2>History</h2>
+          <label class="switch" title="Copy clips from other devices to this device's clipboard automatically while this tab is focused">
+            <input type="checkbox" id="autocopy"><span>Auto-copy incoming</span>
+          </label>
+          <button id="clear-clips" class="btn small ghost danger" type="button">Clear all</button>
+        </div>
+        <ul id="clip-list" class="list"></ul>
+        <p id="clip-empty" class="empty" hidden>Nothing here yet. Anything you send shows up on all your signed-in devices.</p>
+      </section>
+
+      <section id="tab-files" class="tab" role="tabpanel" hidden>
+        <div id="dropzone" class="card dropzone">
+          <svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+          <p><span class="hide-sm">Drop files here, paste them, or </span><label class="linkish">choose files<input type="file" id="file-input" multiple hidden></label></p>
+          <p id="limit-hint" class="hint"></p>
+        </div>
+        <div class="quota" id="quota" hidden>
+          <div class="bar"><div id="quota-fill"></div></div>
+          <span id="quota-text" class="hint"></span>
+        </div>
+        <ul id="upload-list" class="list"></ul>
+        <ul id="file-list" class="list"></ul>
+        <p id="file-empty" class="empty" hidden>No files yet. Uploaded files are available on all your signed-in devices.</p>
+      </section>
+
+      <section id="tab-account" class="tab" role="tabpanel" hidden>
+        <div class="card">
+          <h2>This device</h2>
+          <form id="device-form" class="inline-form">
+            <input id="device-name" maxlength="64" aria-label="Device name" required>
+            <button class="btn" type="submit">Rename</button>
+          </form>
+          <p class="hint">Signed in as <strong id="who"></strong>.</p>
+          <button id="logout-btn" class="btn danger" type="button">Sign out</button>
+        </div>
+
+        <div class="card">
+          <h2>Signed-in devices</h2>
+          <ul id="session-list" class="list compact"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Change password</h2>
+          <form id="password-form" class="stack">
+            <input type="text" name="username" autocomplete="username" hidden>
+            <label class="field"><span>Current password</span>
+              <input type="password" name="current_password" autocomplete="current-password" required></label>
+            <label class="field"><span>New password</span>
+              <input type="password" name="new_password" autocomplete="new-password" minlength="8" required></label>
+            <p class="hint">Changing your password signs out all other devices.</p>
+            <button class="btn primary" type="submit">Update password</button>
+          </form>
+        </div>
+
+        <div class="card" id="admin-card" hidden>
+          <h2>Users <span class="badge">admin</span></h2>
+          <ul id="user-list" class="list compact"></ul>
+          <form id="user-form" class="stack">
+            <h3>Add user</h3>
+            <label class="field"><span>Username</span>
+              <input name="username" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9][A-Za-z0-9_.\-]{0,31}" required></label>
+            <label class="field"><span>Password</span>
+              <input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label class="switch"><input type="checkbox" name="is_admin"><span>Admin</span></label>
+            <button class="btn primary" type="submit">Create user</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <template id="clip-tpl">
+    <li class="item clip">
+      <pre class="clip-text"></pre>
+      <button class="more linkish" type="button" hidden>Show more</button>
+      <div class="item-foot">
+        <span class="meta"><span class="device"></span> · <time></time></span>
+        <span class="actions">
+          <button class="btn small primary copy" type="button">Copy</button>
+          <button class="btn small ghost danger delete" type="button" aria-label="Delete clip">Delete</button>
+        </span>
+      </div>
+    </li>
+  </template>
+
+  <template id="file-tpl">
+    <li class="item file">
+      <div class="thumb"><span class="ext"></span></div>
+      <div class="file-body">
+        <div class="file-name"></div>
+        <div class="meta"><span class="size"></span> · <span class="device"></span> · <time></time></div>
+      </div>
+      <span class="actions">
+        <a class="btn small primary download">Download</a>
+        <button class="btn small ghost danger delete" type="button">Delete</button>
+      </span>
+    </li>
+  </template>
+
+  <template id="upload-tpl">
+    <li class="item upload">
+      <div class="file-body">
+        <div class="file-name"></div>
+        <progress max="100" value="0"></progress>
+        <div class="meta status"></div>
+      </div>
+      <span class="actions"><button class="btn small ghost cancel" type="button">Cancel</button></span>
+    </li>
+  </template>
+
+  <template id="session-tpl">
+    <li class="item session">
+      <div class="file-body">
+        <div class="file-name"><span class="dot"></span><span class="name"></span> <span class="badge current" hidden>this device</span></div>
+        <div class="meta"><span class="ua"></span></div>
+        <div class="meta"><span class="ip"></span> · last active <time></time></div>
+      </div>
+      <span class="actions"><button class="btn small ghost danger revoke" type="button">Sign out</button></span>
+    </li>
+  </template>
+
+  <template id="user-tpl">
+    <li class="item user">
+      <div class="file-body">
+        <div class="file-name"><span class="name"></span> <span class="badge admin" hidden>admin</span></div>
+        <div class="meta"><span class="used"></span> stored</div>
+      </div>
+      <span class="actions">
+        <button class="btn small ghost reset" type="button">Reset password</button>
+        <button class="btn small ghost toggle-admin" type="button"></button>
+        <button class="btn small ghost danger delete" type="button">Delete</button>
+      </span>
+    </li>
+  </template>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>
