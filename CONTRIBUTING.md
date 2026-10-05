@@ -40,7 +40,7 @@ docs/                 deployment and API docs, README images
 ## Pull requests
 
 1. Open an issue first for anything bigger than a small fix, so we can agree on the approach.
-2. Make sure `make lint test` passes.
+2. Make sure `make lint test` passes locally; CI only runs when a maintainer starts it.
 3. Describe what changed and how you tested it.
 
 ## Code of conduct

@@ -10,7 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sainad2222/hopclip/actions/workflows/ci.yml"><img src="https://github.com/sainad2222/hopclip/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/sainad2222/hopclip" alt="Go version"></a>
   <a href="https://github.com/sainad2222/hopclip/pkgs/container/hopclip"><img src="https://img.shields.io/badge/image-ghcr.io-2496ED?logo=docker&logoColor=white" alt="Container image"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0d9488" alt="MIT License"></a>
